@@ -42,15 +42,21 @@ public class FlyingTimeService {
     }
 
     private static void get90Percentile(List<Ticket> ticketList) {
-        List<Long> collect = ticketList.stream().map(FlyingTimeService::getFlyingTimeInMinutes).sorted().collect(Collectors.toList());
-        int percentilePosition = (int) Math.ceil((90.0 / 100.0) * collect.size());
-        if (percentilePosition == collect.size() - 1) {
-            double percentile = (collect.get(collect.size() - 1) + collect.get(collect.size() - 2)) >> 1;
+        List<Long> flyingTimeInMinutesList = ticketList.stream()
+            .map(FlyingTimeService::getFlyingTimeInMinutes)
+            .sorted()
+            .collect(Collectors.toList());
+
+        int numberOfFlies = flyingTimeInMinutesList.size();
+
+        int percentilePosition = (int) Math.ceil((90.0 / 100.0) * numberOfFlies);
+        if (percentilePosition == numberOfFlies - 1) {
+            double percentile = (flyingTimeInMinutesList.get(numberOfFlies - 1) + flyingTimeInMinutesList.get(numberOfFlies - 2)) / 2;
             int hours = (int) percentile / 60;
             double minutes = percentile % 60;
             System.out.printf("90-й процентиль времени полета между городами Владивосток и Тель-Авив %s часов %s минут \n", hours, minutes);
         } else {
-            long percentile = collect.get(percentilePosition - 1);
+            long percentile = flyingTimeInMinutesList.get(percentilePosition - 1);
             int hours = (int) percentile / 60;
             double minutes = percentile % 60;
             System.out.printf("90-й процентиль времени полета между городами Владивосток и Тель-Авив %s часов %s минут \n", hours, minutes);
