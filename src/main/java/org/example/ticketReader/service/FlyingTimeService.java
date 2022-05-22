@@ -14,8 +14,9 @@ public class FlyingTimeService {
 
     public static void getResultForTicketList(String jsonFilePath){
         List<Ticket> tickets = readTicketList(jsonFilePath);
-        getAverageFlyingTime(tickets);
-        get90Percentile(tickets);
+        int numberOfFlies = tickets.size();
+        getAverageFlyingTime(tickets, numberOfFlies);
+        get90Percentile(tickets, numberOfFlies);
     }
 
     private static List<Ticket> readTicketList(String jsonFilePath) {
@@ -31,23 +32,25 @@ public class FlyingTimeService {
         return ticketList.getTickets();
     }
 
-    private static void getAverageFlyingTime(List<Ticket> ticketList) {
+    private static void getAverageFlyingTime(List<Ticket> ticketList, int numberOfFlies) {
 
+        long totalFlyingTimeInMinutes = ticketList.stream()
+            .map(FlyingTimeService::getFlyingTimeInMinutes)
+            .reduce(Long::sum)
+            .get();
 
-        double averageFlyingTime = ticketList.stream().map(FlyingTimeService::getFlyingTimeInMinutes).reduce(Long::sum).get() / ticketList.size();
+        double averageFlyingTime = totalFlyingTimeInMinutes / numberOfFlies;
         int hours =  (int) averageFlyingTime / 60;
         double minutes = averageFlyingTime % 60;
 
         System.out.printf("Cреднее время полета между городами Владивосток и Тель-Авив составляет %s часов %s минут \n", hours, minutes);
     }
 
-    private static void get90Percentile(List<Ticket> ticketList) {
+    private static void get90Percentile(List<Ticket> ticketList, int numberOfFlies) {
         List<Long> flyingTimeInMinutesList = ticketList.stream()
             .map(FlyingTimeService::getFlyingTimeInMinutes)
             .sorted()
             .collect(Collectors.toList());
-
-        int numberOfFlies = flyingTimeInMinutesList.size();
 
         int percentilePosition = (int) Math.ceil((90.0 / 100.0) * numberOfFlies);
         if (percentilePosition == numberOfFlies - 1) {
