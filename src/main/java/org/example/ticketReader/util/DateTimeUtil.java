@@ -6,13 +6,14 @@ import java.util.Date;
 
 public class DateTimeUtil {
 
+    private final static String PATTERN = "dd.MM.yy HH:mm";
+
     public static Date dateTimeParser(String date, String time) {
 
         StringBuilder builder = new StringBuilder();
         builder.append(date).append(" ").append(time);
         Date parsedDate;
-        String pattern = "dd.MM.yy HH:mm";
-        SimpleDateFormat format = new SimpleDateFormat(pattern);
+        SimpleDateFormat format = new SimpleDateFormat(PATTERN);
         try {
             parsedDate = format.parse(builder.toString());
         } catch (ParseException e) {
