@@ -7,14 +7,17 @@ import org.example.ticketReader.data.TicketList;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class FlyingTimeService {
 
-    public static void getResultForTicketList(String jsonFilePath){
+    public static void getResultForTicketList(String jsonFilePath) {
+
         List<Ticket> tickets = readTicketList(jsonFilePath);
         int numberOfFlies = tickets.size();
+
         getAverageFlyingTime(tickets, numberOfFlies);
         get90Percentile(tickets, numberOfFlies);
     }
@@ -22,8 +25,8 @@ public class FlyingTimeService {
     private static List<Ticket> readTicketList(String jsonFilePath) {
 
         TicketList ticketList;
-
         ObjectMapper mapper = new ObjectMapper();
+
         try {
             ticketList = mapper.readValue(Files.readAllBytes(Paths.get(jsonFilePath)), TicketList.class);
         } catch (Exception e) {
@@ -34,39 +37,46 @@ public class FlyingTimeService {
 
     private static void getAverageFlyingTime(List<Ticket> ticketList, int numberOfFlies) {
 
-        long totalFlyingTimeInMinutes = ticketList.stream()
-            .map(FlyingTimeService::getFlyingTimeInMinutes)
-            .reduce(Long::sum)
-            .get();
+        double averageFlyingTime = Arrays.stream(ticketList.stream()
+                .map(FlyingTimeService::getFlyingTimeInMinutes)
+                .mapToLong(l -> l)
+                .toArray())
+            .average()
+            .getAsDouble();
 
-        double averageFlyingTime = totalFlyingTimeInMinutes / numberOfFlies;
-        int hours =  (int) averageFlyingTime / 60;
-        double minutes = averageFlyingTime % 60;
-
-        System.out.printf("Cреднее время полета между городами Владивосток и Тель-Авив составляет %s часов %s минут \n", hours, minutes);
+        System.out.printf("Average flight time between Vladivostok and Tel Aviv is %s hours %s minutes \n",
+            getHours(averageFlyingTime), getMinutes(averageFlyingTime));
     }
 
     private static void get90Percentile(List<Ticket> ticketList, int numberOfFlies) {
+
         List<Long> flyingTimeInMinutesList = ticketList.stream()
             .map(FlyingTimeService::getFlyingTimeInMinutes)
             .sorted()
             .collect(Collectors.toList());
 
         int percentilePosition = (int) Math.ceil((90.0 / 100.0) * numberOfFlies);
+
         if (percentilePosition == numberOfFlies - 1) {
             double percentile = (flyingTimeInMinutesList.get(numberOfFlies - 1) + flyingTimeInMinutesList.get(numberOfFlies - 2)) / 2;
-            int hours = (int) percentile / 60;
-            double minutes = percentile % 60;
-            System.out.printf("90-й процентиль времени полета между городами Владивосток и Тель-Авив %s часов %s минут \n", hours, minutes);
+            System.out.printf("90th percentile of flight time between Vladivostok and Tel Aviv %s hours %s minutes \n",
+                getHours(percentile), getMinutes(percentile));
         } else {
             long percentile = flyingTimeInMinutesList.get(percentilePosition - 1);
-            int hours = (int) percentile / 60;
-            double minutes = percentile % 60;
-            System.out.printf("90-й процентиль времени полета между городами Владивосток и Тель-Авив %s часов %s минут \n", hours, minutes);
+            System.out.printf("90th percentile of flight time between Vladivostok and Tel Aviv is %s hours %s minutes  \n",
+                getHours(percentile), getMinutes(percentile));
         }
     }
 
     private static long getFlyingTimeInMinutes(Ticket ticket) {
         return Duration.between(ticket.getDepartureDate().toInstant(), ticket.getArrivalDate().toInstant()).toMinutes();
+    }
+
+    private static int getHours(double timeInMinutes) {
+        return (int) timeInMinutes / 60;
+    }
+
+    private static double getMinutes(double timeInMinutes) {
+        return timeInMinutes % 60;
     }
 }
